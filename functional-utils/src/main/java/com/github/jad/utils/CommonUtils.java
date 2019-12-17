@@ -1,12 +1,11 @@
 package com.github.jad.utils;
 
 import com.github.jad.utils.dto.CustomThreadFactory;
+import com.github.jad.utils.dto.ExceptionedSupplier;
 import com.github.jad.utils.dto.Ref;
 
 import java.util.*;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -39,11 +38,6 @@ public class CommonUtils {
         return () -> (T) (res.getObj() == THBNL ? setAndReturn(res::setObj, supplier.get()) : res.getObj());
     }
 
-    /*public static <T,R> Observable.Transformer<T, R> parallel(int threadCount,
-                                                              Scheduler scheduler,
-                                                              Function<Observable<T>, Observable<R>> map) {
-        return parallel(threadCount, e -> (int)(Math.random() * threadCount), scheduler, map);
-    }*/
 
     public static <T> T getOrDefault(T val, T def){
         return Optional.ofNullable(val).orElse(def);
@@ -65,11 +59,6 @@ public class CommonUtils {
             namingPattern += "-%d";
         }
         return new CustomThreadFactory(namingPattern, daemon);
-    }
-
-    @FunctionalInterface
-    public interface ExceptionedSupplier<T> {
-        T get() throws Exception;
     }
 
     public static <T> T propagateException(ExceptionedSupplier<T> supplier) {

@@ -1,4 +1,4 @@
-package utils.dto;
+package com.github.jad.utils.dto;
 
 import rx.Producer;
 import rx.Subscriber;

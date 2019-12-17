@@ -1,9 +1,9 @@
-package utils;
+package com.github.jad.utils;
 
 import rx.Observable;
 import rx.Scheduler;
-import utils.dto.SmartBuffer;
-import utils.dto.ValWrapper;
+import com.github.jad.utils.dto.SmartBuffer;
+import com.github.jad.utils.dto.ValWrapper;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

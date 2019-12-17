@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.jad</groupId>
-    <artifactId>utils</artifactId>
+    <artifactId>com.github.jad.utils</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
 
@@ -23,8 +23,8 @@
     </properties>
 
     <modules>
-        <module>functional-utils</module>
-        <module>rx-utils</module>
+        <module>functional-com.github.jad.utils</module>
+        <module>rx-com.github.jad.utils</module>
     </modules>
 
     <dependencyManagement>
@@ -70,11 +70,11 @@
     <distributionManagement>
         <repository>
             <id>packagecloud-jad7</id>
-            <url>packagecloud+https://packagecloud.io/jad7/utils</url>
+            <url>packagecloud+https://packagecloud.io/jad7/com.github.jad.utils</url>
         </repository>
         <snapshotRepository>
             <id>packagecloud-jad7</id>
-            <url>packagecloud+https://packagecloud.io/jad7/utils</url>
+            <url>packagecloud+https://packagecloud.io/jad7/com.github.jad.utils</url>
         </snapshotRepository>
     </distributionManagement>
 
