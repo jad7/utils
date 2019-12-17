@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.jad</groupId>
-    <artifactId>com.github.jad.utils</artifactId>
+    <artifactId>utils-parent</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
 
@@ -23,8 +23,8 @@
     </properties>
 
     <modules>
-        <module>functional-com.github.jad.utils</module>
-        <module>rx-com.github.jad.utils</module>
+        <module>functional-utils</module>
+        <module>rx-utils</module>
     </modules>
 
     <dependencyManagement>
