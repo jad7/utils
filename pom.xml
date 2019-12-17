@@ -67,4 +67,15 @@
         </plugins>
     </build>
 
+    <distributionManagement>
+        <repository>
+            <id>packagecloud-jad7</id>
+            <url>packagecloud+https://packagecloud.io/jad7/utils</url>
+        </repository>
+        <snapshotRepository>
+            <id>packagecloud-jad7</id>
+            <url>packagecloud+https://packagecloud.io/jad7/utils</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>
