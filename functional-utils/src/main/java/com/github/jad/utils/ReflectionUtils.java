@@ -6,7 +6,6 @@ import java.security.PrivilegedAction;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 import static java.security.AccessController.doPrivileged;
 

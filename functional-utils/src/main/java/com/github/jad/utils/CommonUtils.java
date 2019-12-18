@@ -31,6 +31,39 @@ public class CommonUtils {
         return !isEmpty(map);
     }
 
+    public static boolean isEmpty(final CharSequence cs) {
+        return cs == null || cs.length() == 0;
+    }
+
+    public static boolean isNonEmpty(final CharSequence cs) {
+        return !isEmpty(cs);
+    }
+
+    //Copy-paste org.apache.commons.lang3.StringUtils
+    public static String uncapitalize(final String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return str;
+        }
+
+        final int firstCodepoint = str.codePointAt(0);
+        final int newCodePoint = Character.toLowerCase(firstCodepoint);
+        if (firstCodepoint == newCodePoint) {
+            // already capitalized
+            return str;
+        }
+
+        final int newCodePoints[] = new int[strLen]; // cannot be longer than the char array
+        int outOffset = 0;
+        newCodePoints[outOffset++] = newCodePoint; // copy the first codepoint
+        for (int inOffset = Character.charCount(firstCodepoint); inOffset < strLen; ) {
+            final int codepoint = str.codePointAt(inOffset);
+            newCodePoints[outOffset++] = codepoint; // copy the remaining ones
+            inOffset += Character.charCount(codepoint);
+        }
+        return new String(newCodePoints, 0, outOffset);
+    }
+
 
     @SuppressWarnings("unchecked")
     public static <T> Supplier<T> lazy(Supplier<T> supplier) {
@@ -121,5 +154,22 @@ public class CommonUtils {
             result.put((K)objects[i], (V)objects[i + 1]);
         }
         return result;
+    }
+
+    public static boolean isBlank(final CharSequence cs) {
+        int strLen;
+        if (cs == null || (strLen = cs.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(cs.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isNotBlank(final CharSequence cs) {
+        return !isBlank(cs);
     }
 }

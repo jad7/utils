@@ -2,9 +2,6 @@ package com.github.jad.utils;
 
 import com.github.jad.utils.dto.TriFunction;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -28,9 +25,9 @@ public class FunctionalUtils {
         return (p1) -> function.apply(p1, p2);
     }
 
-    /*public static <P1, P2, P3, V> BiFunction<P1, P3, V> curry2(TriFunction<P1, P2, P3, V> function, P2 p2) {
+    public static <P1, P2, P3, V> BiFunction<P1, P3, V> curry2(TriFunction<P1, P2, P3, V> function, P2 p2) {
         return (p1, p3) -> function.apply(p1, p2, p3);
-    }*/
+    }
 
     public static <P1, P2, V> Function<P1, V> curry2(BiFunction<P1, P2, V> function, Supplier<P2> p2) {
         return (p1) -> function.apply(p1, p2.get());
@@ -52,5 +49,10 @@ public class FunctionalUtils {
         consumer.accept(obj);
         return obj;
     }
+
+    public static <A, B> Function<A, B> supToFun(Supplier<B> supplier) {
+        return a -> supplier.get();
+    }
+
 
 }
