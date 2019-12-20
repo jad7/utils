@@ -1,11 +1,13 @@
 package com.github.jad.utils;
 
 import com.github.jad.utils.dto.CustomThreadFactory;
-import com.github.jad.utils.dto.ExceptionedSupplier;
+import com.github.jad.utils.dto.FunctionEx;
+import com.github.jad.utils.dto.SupplierEx;
 import com.github.jad.utils.dto.Ref;
 
 import java.util.*;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -94,7 +96,7 @@ public class CommonUtils {
         return new CustomThreadFactory(namingPattern, daemon);
     }
 
-    public static <T> T propagateException(ExceptionedSupplier<T> supplier) {
+    public static <T> T propagateException(SupplierEx<T> supplier) {
         try {
             return supplier.get();
         } catch (Exception e) {
@@ -102,10 +104,22 @@ public class CommonUtils {
         }
     }
 
-    public static <T> Supplier<T> propagateSupplierException(ExceptionedSupplier<T> supplier) {
+    public static <T> Supplier<T> supplierEx(SupplierEx<T> supplier) {
         return () -> {
             try {
                 return supplier.get();
+            } catch (Exception e) {
+                throw propagate(e);
+            }
+        };
+    }
+
+    //TODO BiFunction
+
+    public static <P, R> Function<P, R> exFun(FunctionEx<P, R> functionEx) {
+        return p -> {
+            try {
+                return functionEx.apply(p);
             } catch (Exception e) {
                 throw propagate(e);
             }
