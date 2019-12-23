@@ -2,10 +2,7 @@ package com.github.jad.utils;
 
 import com.github.jad.utils.dto.TriFunction;
 
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 public class FunctionalUtils {
 
@@ -13,6 +10,10 @@ public class FunctionalUtils {
         return () -> function.apply(p1);
     }
 
+    public static <P1, P2> Consumer<P2> curry1(BiConsumer<P1, P2> consumer, final P1 p1) {
+        return (p2) -> consumer.accept(p1, p2);
+    }
+    
     public static <P1, P2, V> Function<P2, V> curry1(BiFunction<P1, P2, V> function, P1 p1) {
         return (p2) -> function.apply(p1, p2);
     }
