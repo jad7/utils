@@ -96,35 +96,7 @@ public class CommonUtils {
         return new CustomThreadFactory(namingPattern, daemon);
     }
 
-    public static <T> T propagateException(SupplierEx<T> supplier) {
-        try {
-            return supplier.get();
-        } catch (Exception e) {
-            throw propagate(e);
-        }
-    }
 
-    public static <T> Supplier<T> supplierEx(SupplierEx<T> supplier) {
-        return () -> {
-            try {
-                return supplier.get();
-            } catch (Exception e) {
-                throw propagate(e);
-            }
-        };
-    }
-
-    //TODO BiFunction
-
-    public static <P, R> Function<P, R> exFun(FunctionEx<P, R> functionEx) {
-        return p -> {
-            try {
-                return functionEx.apply(p);
-            } catch (Exception e) {
-                throw propagate(e);
-            }
-        };
-    }
 
     public static <X extends Throwable> void propagateIfInstanceOf(Throwable throwable, Class<X> declaredType) throws X {
         if (declaredType.isInstance(throwable)) {
