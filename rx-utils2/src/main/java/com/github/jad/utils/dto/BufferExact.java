@@ -3,57 +3,79 @@ package com.github.jad.utils.dto;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
+import io.reactivex.exceptions.Exceptions;
+import io.reactivex.internal.functions.ObjectHelper;
+import io.reactivex.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.internal.util.BackpressureHelper;
+import io.reactivex.plugins.RxJavaPlugins;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
-public class BufferExact<T> implements FlowableSubscriber<T> {
+public class BufferExact<T, C extends Collection<? super T>>
+        implements FlowableSubscriber<T>, Subscription {
+
+    final Subscriber<? super C> downstream;
+
+    final Callable<C> bufferSupplier;
+
+    final int size;
+
+    C buffer;
+
+    Subscription upstream;
+
+    boolean done;
+
+    int index;
+
+    final Predicate<T> isSignal;
+    private boolean lastWasASignal;
+
+    BufferExact(Subscriber<? super C> actual, int size, Callable<C> bufferSupplier, Predicate<T> isSignal) {
+        this.downstream = actual;
+        this.size = size;
+        this.bufferSupplier = bufferSupplier;
+        this.isSignal = isSignal;
+    }
+
+    @Override
+    public void request(long n) {
+        if (SubscriptionHelper.validate(n)) {
+            upstream.request(BackpressureHelper.multiplyCap(n, size));
+        }
+    }
+
+    @Override
+    public void cancel() {
+        upstream.cancel();
+    }
+
     @Override
     public void onSubscribe(Subscription s) {
+        if (SubscriptionHelper.validate(this.upstream, s)) {
+            this.upstream = s;
 
+            downstream.onSubscribe(this);
+        }
     }
 
     @Override
     public void onNext(T t) {
+        if (done) {
+            return;
+        }
 
-    }
+        C b = buffer;
 
-    @Override
-    public void onError(Throwable throwable) {
-
-    }
-
-    @Override
-    public void onComplete() {
-
-    }
-    /*final Subscriber<? super List<T>> actual;
-    final int count;
-    final Predicate<T> isSignal;
-    private volatile boolean lastWasASignal;
-
-
-    List<T> buffer;
-
-    public BufferExact(Subscriber<? super List<T>> actual, int count, Predicate<T> isSignal) {
-        this.actual = actual;
-        this.count = count;
-        this.isSignal = isSignal;
-        this.request(0L);
-        Flowable.just(1).buffer()
-    }
-
-    @Override
-    public  void onNext(T t) {
         if (isSignal.test(t)) {
             if (lastWasASignal) {
-                List<T> b = buffer;
                 if (b != null) {
                     buffer = null;
-                    actual.onNext(b);
+                    downstream.onNext(b);
                 }
             } else {
                 lastWasASignal = true;
@@ -61,46 +83,55 @@ public class BufferExact<T> implements FlowableSubscriber<T> {
             request(1);
         } else {
             lastWasASignal = false;
-            List<T> b = buffer;
             if (b == null) {
-                b = new ArrayList<T>(count);
+                try {
+                    b = ObjectHelper.requireNonNull(bufferSupplier.call(), "The bufferSupplier returned a null buffer");
+                } catch (Throwable e) {
+                    Exceptions.throwIfFatal(e);
+                    cancel();
+                    onError(e);
+                    return;
+                }
+
                 buffer = b;
             }
 
             b.add(t);
 
-            if (b.size() == count) {
+            int i = index + 1;
+            if (i == size) {
+                index = 0;
                 buffer = null;
-                actual.onNext(b);
+                downstream.onNext(b);
+            } else {
+                index = i;
             }
         }
     }
 
-
     @Override
-    public void onError(Throwable e) {
-        buffer = null;
-        actual.onError(e);
-    }
-
-    @Override
-    public void onCompleted() {
-        List<T> b = buffer;
-        if (b != null) {
-            actual.onNext(b);
+    public void onError(Throwable t) {
+        if (done) {
+            RxJavaPlugins.onError(t);
+            return;
         }
-        actual.onCompleted();
+        done = true;
+        downstream.onError(t);
     }
 
-    Producer createProducer() {
-        return n -> {
-            if (n < 0L) {
-                throw new IllegalArgumentException("n >= required but it was " + n);
-            }
-            if (n != 0L) {
-                long u = BackpressureUtils.multiplyCap(n, count);
-                BufferExact.this.request(u);
-            }
-        };
-    }*/
+    @Override
+    public void onComplete() {
+        if (done) {
+            return;
+        }
+        done = true;
+
+        C b = buffer;
+
+        if (b != null && !b.isEmpty()) {
+            downstream.onNext(b);
+        }
+        downstream.onComplete();
+    }
+
 }

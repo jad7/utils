@@ -1,14 +1,18 @@
 package com.github.jad.utils.dto;
 
-import io.reactivex.FlowableOperator;
+import io.reactivex.Flowable;
+import io.reactivex.internal.fuseable.HasUpstreamPublisher;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 
-public  class SmartBuffer<T> implements FlowableOperator<List<T>, T> {
+public class SmartBuffer<T, C extends Collection<? super T>> extends Flowable<C> implements HasUpstreamPublisher<T> {
+        protected final Flowable<T> source;
         final int count;
         final Predicate<T> isSignal;
 
@@ -17,7 +21,8 @@ public  class SmartBuffer<T> implements FlowableOperator<List<T>, T> {
          *            the number of elements a buffer should have before being emitted
          * @param isSignal TODO
          */
-        public SmartBuffer(int count, Predicate<T> isSignal) {
+        public SmartBuffer(Flowable<T> source, int count, Predicate<T> isSignal) {
+            this.source = source;
             if (count <= 0) {
                 throw new IllegalArgumentException("count must be greater than 0");
             }
@@ -26,17 +31,14 @@ public  class SmartBuffer<T> implements FlowableOperator<List<T>, T> {
             this.isSignal = isSignal;
         }
 
+    @Override
+    protected void subscribeActual(Subscriber<? super C> s) {
+        source.subscribe(new BufferExact<>(s, count, () -> (C) new ArrayList<T>(count), isSignal));
 
+    }
 
     @Override
-    public Subscriber<? super T> apply(Subscriber<? super List<T>> subscriber) throws Exception {
-            //TODO
-        throw new UnsupportedOperationException("Not implemented");
-        /*BufferExact<T> parent = new BufferExact<T>(subscriber, count, isSignal);
-
-        subscriber.add(parent);
-        subscriber.setProducer(parent.createProducer());
-
-        return parent;*/
+    public Publisher<T> source() {
+        return source;
     }
 }
