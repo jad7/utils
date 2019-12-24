@@ -28,7 +28,7 @@
         <module>functional-utils</module>
         <module>rx-utils</module>
         <module>jobmanager</module>
-        <module>rx-utils2</module>
+        <module>rx2-utils</module>
     </modules>
 
     <dependencyManagement>
