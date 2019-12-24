@@ -1,17 +1,18 @@
-package com.github.jad.utils.dto;
+package com.github.jad.utils.rx2.dto;
 
+import com.github.jad.utils.rx2.dto.BufferExact;
 import io.reactivex.Flowable;
 import io.reactivex.internal.fuseable.HasUpstreamPublisher;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 
-public class SmartBuffer<T, C extends Collection<? super T>> extends Flowable<C> implements HasUpstreamPublisher<T> {
+public class SmartBuffer<T> extends Flowable<List<? extends T>> implements HasUpstreamPublisher<T> {
         protected final Flowable<T> source;
         final int count;
         final Predicate<T> isSignal;
@@ -32,8 +33,8 @@ public class SmartBuffer<T, C extends Collection<? super T>> extends Flowable<C>
         }
 
     @Override
-    protected void subscribeActual(Subscriber<? super C> s) {
-        source.subscribe(new BufferExact<>(s, count, () -> (C) new ArrayList<T>(count), isSignal));
+    protected void subscribeActual(Subscriber<? super List<? extends T>> s) {
+        source.subscribe(new BufferExact<>(s, count, () -> new ArrayList<>(count), isSignal));
 
     }
 
@@ -41,4 +42,5 @@ public class SmartBuffer<T, C extends Collection<? super T>> extends Flowable<C>
     public Publisher<T> source() {
         return source;
     }
+
 }

@@ -1,7 +1,6 @@
-package com.github.jad.utils.dto;
+package com.github.jad.utils.rx2.dto;
 
 
-import io.reactivex.Flowable;
 import io.reactivex.FlowableSubscriber;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.internal.functions.ObjectHelper;

@@ -1,8 +1,8 @@
-package com.github.jad.utils;
+package com.github.jad.utils.rx2;
 
 import com.github.jad.utils.dto.Ref;
-import com.github.jad.utils.dto.SmartBuffer;
-import com.github.jad.utils.dto.ValWrapper;
+import com.github.jad.utils.rx2.dto.SmartBuffer;
+import com.github.jad.utils.rx2.dto.ValWrapper;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.Scheduler;
@@ -31,7 +31,7 @@ public class RxUtils {
                             tFlowable.doOnTerminate(() -> terminationFlag.set(false)).map(ValWrapper::val),
                             interval.takeWhile(r -> terminationFlag.get()).onBackpressureDrop()
                         ), 2)
-                    .lift(new SmartBuffer<ValWrapper<R>>(bufferSize, ValWrapper::isSignal))
+                    .compose(src -> new SmartBuffer<>(src, bufferSize, ValWrapper::isSignal))
                     .map(list -> list.stream().map(ValWrapper::getVal).collect(Collectors.toList()));
         };
     }
@@ -47,9 +47,8 @@ public class RxUtils {
         return rObservable -> rObservable
                 .groupBy(r -> threadDistribution.apply(r) % threadCount)
                 //.lift(new OperatorGroupByEvicting<>(r -> threadDistribution.apply(r) % threadCount, v -> v, threadCount * 2, false, null))
-                .flatMap(item -> item.observeOn(scheduler, false, threadCount * 2)
-                                .compose(map::apply).rebatchRequests(1),
-                        threadCount);
+                .flatMap(item -> item.observeOn(scheduler, false, 1)
+                                .compose(map::apply), false, threadCount, 1);
     }
 
     public static <T,R> FlowableTransformer<T, R> parallel(int threadCount,
@@ -59,10 +58,8 @@ public class RxUtils {
                                                            Function<Flowable<T>, Flowable<R>> map) {
         return rObservable -> rObservable
                 .groupBy(r -> threadDistribution.apply(r) % threadCount, t -> t, false, bufferSize)
-                //.lift(new OperatorGroupByEvicting<>(r -> threadDistribution.apply(r) % threadCount, v -> v, bufferSize, false, null))
                 .flatMap(item -> item.observeOn(scheduler, false, bufferSize)
-                                .compose(map::apply),
-                        threadCount);
+                                .compose(map::apply), false, threadCount, bufferSize);
     }
 
     public static <T,R> FlowableTransformer<T, R> parallel(int threadCount,

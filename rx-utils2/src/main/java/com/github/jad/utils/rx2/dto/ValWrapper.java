@@ -1,4 +1,4 @@
-package com.github.jad.utils.dto;
+package com.github.jad.utils.rx2.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
