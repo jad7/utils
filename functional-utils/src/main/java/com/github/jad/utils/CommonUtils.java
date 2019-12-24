@@ -1,8 +1,6 @@
 package com.github.jad.utils;
 
 import com.github.jad.utils.dto.CustomThreadFactory;
-import com.github.jad.utils.dto.FunctionEx;
-import com.github.jad.utils.dto.SupplierEx;
 import com.github.jad.utils.dto.Ref;
 
 import java.util.*;
@@ -70,7 +68,7 @@ public class CommonUtils {
     @SuppressWarnings("unchecked")
     public static <T> Supplier<T> lazy(Supplier<T> supplier) {
         final Ref<T> res = new Ref(THBNL);
-        return () -> (T) (res.getObj() == THBNL ? setAndReturn(res::setObj, supplier.get()) : res.getObj());
+        return () -> (T) (res.get() == THBNL ? setAndReturn(res::set, supplier.get()) : res.get());
     }
 
 

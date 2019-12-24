@@ -1,15 +1,36 @@
 package com.github.jad.utils.dto;
 
-import rx.Producer;
-import rx.Subscriber;
-import rx.internal.operators.BackpressureUtils;
+
+import io.reactivex.Flowable;
+import io.reactivex.FlowableSubscriber;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class BufferExact<T> extends Subscriber<T> {
-    final Subscriber<? super List<T>> actual;
+public class BufferExact<T> implements FlowableSubscriber<T> {
+    @Override
+    public void onSubscribe(Subscription s) {
+
+    }
+
+    @Override
+    public void onNext(T t) {
+
+    }
+
+    @Override
+    public void onError(Throwable throwable) {
+
+    }
+
+    @Override
+    public void onComplete() {
+
+    }
+    /*final Subscriber<? super List<T>> actual;
     final int count;
     final Predicate<T> isSignal;
     private volatile boolean lastWasASignal;
@@ -22,6 +43,7 @@ public class BufferExact<T> extends Subscriber<T> {
         this.count = count;
         this.isSignal = isSignal;
         this.request(0L);
+        Flowable.just(1).buffer()
     }
 
     @Override
@@ -80,5 +102,5 @@ public class BufferExact<T> extends Subscriber<T> {
                 BufferExact.this.request(u);
             }
         };
-    }
+    }*/
 }
