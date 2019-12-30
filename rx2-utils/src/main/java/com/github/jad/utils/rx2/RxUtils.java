@@ -1,11 +1,11 @@
 package com.github.jad.utils.rx2;
 
 import com.github.jad.utils.dto.Ref;
+import com.github.jad.utils.dto.VolatileRef;
+import com.github.jad.utils.rx2.dto.ObservableFromFlowable;
 import com.github.jad.utils.rx2.dto.SmartBuffer;
 import com.github.jad.utils.rx2.dto.ValWrapper;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
-import io.reactivex.Scheduler;
+import io.reactivex.*;
 import io.reactivex.schedulers.Schedulers;
 
 import java.util.Arrays;
@@ -23,20 +23,22 @@ public class RxUtils {
         return function::apply;
     }
 
-    public static <R> FlowableTransformer<R, List<R>> smartBuffer(int bufferSize, int time, TimeUnit unit, Scheduler scheduler) {
+    public static <R> FlowableTransformer<R, List<? super R>> smartBuffer(int bufferSize, int time, TimeUnit unit, Scheduler scheduler) {
         return tFlowable -> {
-            Ref<Boolean> terminationFlag = new Ref<>(true);
-            Flowable<ValWrapper<R>> interval = interval(time, unit, scheduler).map(ValWrapper::signal);
-            return  Flowable.merge(Arrays.asList(
-                            tFlowable.doOnTerminate(() -> terminationFlag.set(false)).map(ValWrapper::val),
-                            interval.takeWhile(r -> terminationFlag.get()).onBackpressureDrop()
-                        ), 2)
-                    .compose(src -> new SmartBuffer<>(src, bufferSize, ValWrapper::isSignal))
-                    .map(list -> list.stream().map(ValWrapper::getVal).collect(Collectors.toList()));
+            VolatileRef<Boolean> terminationFlag = new VolatileRef<>(true);
+            Observable<ValWrapper<R>> interval = Observable.interval(time, unit, scheduler).map(ValWrapper::signal);
+            ObservableFromFlowable<ValWrapper<R>> of = new ObservableFromFlowable<>(tFlowable.doOnTerminate(() -> terminationFlag.set(false)).map(ValWrapper::val));
+            return  Observable.merge(Arrays.asList(
+                        interval.takeWhile(r -> terminationFlag.get()),
+                        of
+                    ), 2, 1)
+                    .toFlowable(BackpressureStrategy.DROP)
+                    .compose(src -> new SmartBuffer<>(src, bufferSize, ValWrapper::isSignal, ValWrapper::getVal, of))
+                    ;
         };
     }
 
-    public static <R> FlowableTransformer<R, List<R>> smartBuffer(int bufferSize, int time, TimeUnit unit) {
+    public static <R> FlowableTransformer<R, List<? super R>> smartBuffer(int bufferSize, int time, TimeUnit unit) {
         return smartBuffer(bufferSize, time, unit, Schedulers.computation());
     }
 
@@ -65,6 +67,20 @@ public class RxUtils {
     public static <T,R> FlowableTransformer<T, R> parallel(int threadCount,
                                                               Scheduler scheduler,
                                                               Function<Flowable<T>, Flowable<R>> map) {
-        return parallel(threadCount, e -> (int)(Math.random() * threadCount), scheduler, map);
+        final Int anInt = new Int();
+        return parallel(threadCount, e -> anInt.i++ % threadCount, scheduler, threadCount, map);
     }
+
+    public static <T,R> FlowableTransformer<T, R> parallel(int threadCount,
+                                                              Scheduler scheduler,
+                                                              int bufferSize,
+                                                              Function<Flowable<T>, Flowable<R>> map) {
+
+        final Int anInt = new Int();
+        return parallel(threadCount, e -> anInt.i++ % threadCount, scheduler, bufferSize, map);
+    }
+
+    private static class Int {int i = 0;}
+
+
 }
