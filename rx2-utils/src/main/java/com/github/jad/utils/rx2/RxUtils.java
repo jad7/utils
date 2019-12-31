@@ -1,6 +1,5 @@
 package com.github.jad.utils.rx2;
 
-import com.github.jad.utils.dto.Ref;
 import com.github.jad.utils.dto.VolatileRef;
 import com.github.jad.utils.rx2.dto.ObservableFromFlowable;
 import com.github.jad.utils.rx2.dto.SmartBuffer;
@@ -10,11 +9,10 @@ import io.reactivex.schedulers.Schedulers;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import static io.reactivex.Flowable.interval;
 
 
 public class RxUtils {
@@ -24,6 +22,10 @@ public class RxUtils {
     }
 
     public static <R> FlowableTransformer<R, List<? super R>> smartBuffer(int bufferSize, int time, TimeUnit unit, Scheduler scheduler) {
+        Objects.requireNonNull(unit, "TimeUnit should be nonNull");
+        Objects.requireNonNull(unit, "Scheduler should be nonNull");
+        if (time <= 0) throw new IllegalArgumentException("Time must be positive");
+        if (bufferSize <= 0) throw new IllegalArgumentException("Time must be positive");
         return tFlowable -> {
             VolatileRef<Boolean> terminationFlag = new VolatileRef<>(true);
             Observable<ValWrapper<R>> interval = Observable.interval(time, unit, scheduler).map(ValWrapper::signal);
@@ -33,7 +35,7 @@ public class RxUtils {
                         of
                     ), 2, 1)
                     .toFlowable(BackpressureStrategy.DROP)
-                    .compose(src -> new SmartBuffer<>(src, bufferSize, ValWrapper::isSignal, ValWrapper::getVal, of))
+                    .compose(src -> new SmartBuffer<>(src, bufferSize, ValWrapper::isSignal, ValWrapper::getVal, unit.toMillis(time), of::request))
                     ;
         };
     }
@@ -48,7 +50,6 @@ public class RxUtils {
                                                             Function<Flowable<T>, Flowable<R>> map) {
         return rObservable -> rObservable
                 .groupBy(r -> threadDistribution.apply(r) % threadCount)
-                //.lift(new OperatorGroupByEvicting<>(r -> threadDistribution.apply(r) % threadCount, v -> v, threadCount * 2, false, null))
                 .flatMap(item -> item.observeOn(scheduler, false, 1)
                                 .compose(map::apply), false, threadCount, 1);
     }

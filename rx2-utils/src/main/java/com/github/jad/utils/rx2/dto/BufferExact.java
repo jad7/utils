@@ -12,6 +12,7 @@ import org.reactivestreams.Subscription;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -22,7 +23,7 @@ public class BufferExact<T, R, C extends Collection<? super R>>
 
     private final Callable<C> bufferSupplier;
 
-    private final ObservableFromFlowable of;
+    private final Consumer<Long> realUpstreamConsumer;
     private final int size;
 
     private C buffer;
@@ -36,38 +37,43 @@ public class BufferExact<T, R, C extends Collection<? super R>>
     private final Predicate<T> isSignal;
 
     private final Function<T, R> mapper;
+    private final long msInterval;
+
     long totalRequested = 0;
     long upstreamRequested = 0;
     long totalEmitted = 0;
-    long signalRequested = 0;
 
-    BufferExact(Subscriber<? super C> actual, ObservableFromFlowable of, int size, Callable<C> bufferSupplier, Predicate<T> isSignal, Function<T, R> mapper) {
+    long lastEmitted = 0;
+
+    BufferExact(Subscriber<? super C> actual, Consumer<Long> of, int size,
+                Callable<C> bufferSupplier, Predicate<T> isSignal, Function<T, R> mapper, long msInterval) {
         this.downstream = actual;
-        this.of = of;
+        this.realUpstreamConsumer = of;
         this.size = size;
         this.bufferSupplier = bufferSupplier;
         this.isSignal = isSignal;
         this.mapper = mapper;
+        this.msInterval = msInterval;
     }
 
     @Override
     public void request(long n) {
         if (SubscriptionHelper.validate(n)) {
             totalRequested += n;
-            if (n > 0 && index >= size) {
+            if (n > 0 && index >= size) { //TODO maybe remove
                 C b = buffer;
                 index = 0;
                 buffer = null;
                 totalEmitted++;
+                lastEmitted = System.currentTimeMillis();
                 downstream.onNext(b);
                 n--;
             }
-            long num = BackpressureHelper.multiplyCap(n + 1, size);
+            long num = BackpressureHelper.multiplyCap(n, size);
             long toRequest = Math.max(0, num - upstreamRequested);
             if (toRequest > 0) {
                 this.upstreamRequested += toRequest;
-                //upstream.request(toRequest);
-                of.request(toRequest);
+                realUpstreamConsumer.accept(toRequest);
             }
         }
     }
@@ -97,18 +103,19 @@ public class BufferExact<T, R, C extends Collection<? super R>>
         if (isSignal.test(t)) {
 
             if (b != null && !b.isEmpty()) { //
-               if (totalRequested > totalEmitted)  {
+                long currentTimeMillis = System.currentTimeMillis();
+                if (totalRequested > totalEmitted && (currentTimeMillis - lastEmitted) >= msInterval)  {
                    buffer = null;
+                   index = 0;
                    totalEmitted++;
+                   lastEmitted = currentTimeMillis;
                    downstream.onNext(b);
-               } else {
+               }
+                /*else { //DEBUG backpressure case
                    System.out.println("Requested:" + totalRequested + " Emitted:" + totalEmitted + " UpstreamRequested:"
                            + upstreamRequested + " CurrentBuf" + (buffer == null ? "null" : buffer.size()));
-               }
+               }*/
             }
-            //request(1);
-            //upstream.request(1);
-            signalRequested++;
 
         } else {
             upstreamRequested--;
@@ -133,6 +140,7 @@ public class BufferExact<T, R, C extends Collection<? super R>>
                     index = 0;
                     buffer = null;
                     totalEmitted++;
+                    lastEmitted = System.currentTimeMillis();
                     downstream.onNext(b);
                 }
             } else {
