@@ -1,13 +1,13 @@
 package com.github.jad.jobmanager;
 
 import com.github.jad.utils.Memoizer;
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
 import lombok.experimental.Delegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import rx.Scheduler;
-import rx.schedulers.Schedulers;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
