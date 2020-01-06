@@ -142,6 +142,8 @@ public class JobRunner {
 
     //Solution for A->B->A problem
     @AllArgsConstructor
-    private class WrapperImpl<T> implements Wrapper<T> { @Getter
-    final T object; }
+    private class WrapperImpl<T> implements Wrapper<T> {
+        @Getter
+        final T object;
+    }
 }

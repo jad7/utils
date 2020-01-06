@@ -18,7 +18,6 @@ package com.github.jad.jobmanager;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.springframework.core.env.Environment;
 
 
 /**
@@ -29,18 +28,18 @@ import org.springframework.core.env.Environment;
 @Slf4j
 public class Config {
     private final String prefix;
-    private final Environment environment;
+    private final PropertySource propertySource;
     @Setter
     private Logger logger = log;
 
-    public Config(String prefix, Environment environment) {
+    public Config(String prefix, PropertySource propertySource) {
         this.prefix = prefix;
-        this.environment = environment;
+        this.propertySource = propertySource;
     }
 
     public <T> T getProp(String parameter, Class<T> clazz) {
         String key = prefix + parameter;
-        T property = environment.getProperty(key, clazz);
+        T property = propertySource.getProperty(key, clazz);
         if (property == null) {
             throw new IllegalArgumentException("Property:\"" + key + "\" is not defined in config");
         }
@@ -49,6 +48,6 @@ public class Config {
     }
 
     public <T> T getProp(String parameter, Class<T> clazz, T defaultValue) {
-        return environment.getProperty(prefix + parameter, clazz, defaultValue);
+        return propertySource.getProperty(prefix + parameter, clazz, defaultValue);
     }
 }

@@ -1,12 +1,8 @@
 package com.github.jad.jobmanager;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.github.jad.utils.CommonUtils.isNotBlank;
 import static com.github.jad.utils.CommonUtils.threadFactory;
@@ -28,16 +23,17 @@ import static java.util.concurrent.Executors.newCachedThreadPool;
  */
 
 @Slf4j
-@Component
-public class JobManager implements ApplicationContextAware {
+public class JobManager {
 
-    private static final String PROPERTIES_JOB_CONFIG_PREFIX = "jobmanager.";
-    @Setter
-    private ApplicationContext applicationContext;
+    private final Map<String, JobRunner> jobRunnerMap = new ConcurrentHashMap<>();
 
     private ExecutorService executorService = newCachedThreadPool(threadFactory("jobManager"));
 
-    private Map<String, JobRunner> jobRunnerMap = new ConcurrentHashMap<>();
+    protected PropertySource propertySource;
+
+    public JobManager(PropertySource propertySource) {
+        this.propertySource = propertySource;
+    }
 
     public void addFlowFactory(String name, Supplier<? extends Flow> flowSupplier) {
         Objects.requireNonNull(name);
@@ -96,15 +92,12 @@ public class JobManager implements ApplicationContextAware {
         }
     }
 
-    private Context createContext(String jobName) {
+    protected Context createContext(String jobName) {
         Context context = new Context();
-        context.setApplicationContext(applicationContext);
         context.setTracker(new Tracker());
-        Environment environment = applicationContext.getEnvironment();
         context.setJobManager(this);
-        context.setEnvironment(environment);
         context.setName(jobName);
-        Config config = new Config( PROPERTIES_JOB_CONFIG_PREFIX + jobName + ".", environment);
+        Config config = new Config( jobName + ".", propertySource);
         context.setConfig(config);
         return context;
     }
@@ -114,6 +107,10 @@ public class JobManager implements ApplicationContextAware {
     }
 
     public List<String> getJobNames() {
-        return jobRunnerMap.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        return new ArrayList<>(jobRunnerMap.keySet());
+    }
+
+    public void stopAll() {
+        executorService.shutdownNow();
     }
 }

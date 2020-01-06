@@ -1,9 +1,7 @@
 package com.github.jad.jobmanager;
 
+import io.reactivex.Scheduler;
 import lombok.Data;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
-import rx.Scheduler;
 
 import java.io.PrintStream;
 import java.util.Objects;
@@ -20,8 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Context {
     private Tracker tracker;
     private JobManager jobManager;
-    private ApplicationContext applicationContext;
-    private Environment environment;
     private String name;
     private PrintStream errorStream;
     private AtomicLong fails;
@@ -46,5 +42,9 @@ public class Context {
     public Scheduler scheduler(String name) {
         Objects.requireNonNull(abstractFlow, "For using this method your flow should extends AbstractFlow");
         return abstractFlow.scheduler(name);
+    }
+
+    public ConcurrentMap<String, Object> getVariablesMap() {
+        return state;
     }
 }

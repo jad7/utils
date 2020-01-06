@@ -96,33 +96,6 @@ public class CommonUtils {
 
 
 
-    public static <X extends Throwable> void propagateIfInstanceOf(Throwable throwable, Class<X> declaredType) throws X {
-        if (declaredType.isInstance(throwable)) {
-            throw declaredType.cast(throwable);
-        }
-    }
-
-    public static void propagateIfPossible(Throwable throwable) {
-        propagateIfInstanceOf(throwable, Error.class);
-        propagateIfInstanceOf(throwable, RuntimeException.class);
-    }
-
-    public static <X extends Throwable> void propagateIfPossible(Throwable throwable, Class<X> declaredType) throws X {
-        propagateIfInstanceOf(throwable, declaredType);
-        propagateIfPossible(throwable);
-    }
-
-    public static <X1 extends Throwable, X2 extends Throwable> void propagateIfPossible(Throwable throwable, Class<X1> declaredType1, Class<X2> declaredType2) throws X1, X2 {
-        Objects.requireNonNull(declaredType2);
-        propagateIfInstanceOf(throwable, declaredType1);
-        propagateIfPossible(throwable, declaredType2);
-    }
-
-    public static RuntimeException propagate(Throwable throwable) {
-        propagateIfPossible(Objects.requireNonNull(throwable));
-        throw new RuntimeException(throwable);
-    }
-
     public static <T> Stream<T> concat(Stream<T> ... streams) {
         Stream<T> concat = Stream.empty();
         for (Stream<T> stream : streams) {

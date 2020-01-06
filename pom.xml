@@ -29,6 +29,7 @@
         <module>rx-utils</module>
         <module>jobmanager</module>
         <module>rx2-utils</module>
+        <module>jobmanager-spring</module>
     </modules>
 
     <dependencyManagement>

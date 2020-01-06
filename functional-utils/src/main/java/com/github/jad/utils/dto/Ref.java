@@ -15,4 +15,9 @@ public class Ref<T> implements Serializable { //TODO interface
     public void set(T obj) {
         this.obj = obj;
     }
+
+    public Ref<T> setAndReturn(T obj) {
+        this.obj = obj;
+        return this;
+    }
 }

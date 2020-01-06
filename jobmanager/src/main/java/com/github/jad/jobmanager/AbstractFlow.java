@@ -6,8 +6,6 @@ import io.reactivex.schedulers.Schedulers;
 import lombok.experimental.Delegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +23,7 @@ import static com.github.jad.utils.FunctionalUtils.supToFun;
  * @author Illia Krokhmalov <jad7kii@gmail.com>
  * @since 12/2018
  */
-public abstract class AbstractFlow implements Flow, DisposableBean {
+public abstract class AbstractFlow implements Flow {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -39,10 +37,9 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
     protected Context context;
     @Delegate
     protected Config config;
-    private final Runnable mDoFinalizers = Memoizer.memoize(this::doFinalizers);
+    protected final Runnable mDoFinalizers = Memoizer.memoize(this::doFinalizers);
 
-    protected AbstractFlow() {
-    }
+
 
     @Override
     public String getName() {
@@ -110,8 +107,8 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
         context.setAbstractFlow(this);
         registerFinalizer(() -> getExecutors().values().forEach(ExecutorService::shutdown));
         registerFinalizer(() -> context.getTracker().summaryAndStop());
-        AutowireCapableBeanFactory factory = context.getApplicationContext().getAutowireCapableBeanFactory();
-        factory.autowireBean(this);
+        initializeFlow();
+
         //factory.initializeBean( bean, "bean" ); TODO Maybe
         try {
             safeRun(context, context.getTracker(), config);
@@ -121,6 +118,9 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
         }
     }
 
+    protected void initializeFlow() {
+
+    }
 
 
     @Override
@@ -132,7 +132,7 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
                 executorService.shutdownNow();
             } catch (Exception e) {
                 success = false;
-                log.warn("Stopping execution job {}", getName(), e);
+                log.warn("Exception on stopping execution job {}", getName(), e);
             }
         }
         mDoFinalizers.run();
@@ -149,6 +149,7 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private List<Runnable> getFinalizers() {
         if (context != null) {
             return (List<Runnable>) context.getState().computeIfAbsent("__FINALIZERS__", supToFun(ArrayList::new));
@@ -157,23 +158,18 @@ public abstract class AbstractFlow implements Flow, DisposableBean {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, ExecutorService> getExecutors() {
         return (Map<String, ExecutorService>) context.getState().computeIfAbsent("__EXECUTORS__", supToFun(HashMap::new));
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Scheduler> getSchedulers() {
         return (Map<String, Scheduler>) context.getState().computeIfAbsent("__SCHEDULERS__", supToFun(HashMap::new));
     }
 
 
-    @Override
-    public void destroy() throws Exception {
-        try {
-            mDoFinalizers.run();
-        } catch (Exception e) {
-            log.warn("Exception on destroy flow {}", getName(), e);
-        }
-    }
+
 
 
     public abstract void safeRun(Context context, Tracker tracker, Config config);

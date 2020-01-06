@@ -1,15 +1,14 @@
 package com.github.jad.utils;
 
-import com.github.jad.utils.dto.FunctionEx;
-import com.github.jad.utils.dto.RunnableEx;
-import com.github.jad.utils.dto.SupplierEx;
+import com.github.jad.utils.dto.Ref;
 import com.github.jad.utils.dto.TriFunction;
 
 import java.util.function.*;
 
-import static com.github.jad.utils.CommonUtils.propagate;
 
 public class FunctionalUtils {
+
+    private static final Object THBNL = new Object();
 
     public static <P1, V> Supplier<V> curry(Function<P1, V> function, P1 p1) {
         return () -> function.apply(p1);
@@ -60,52 +59,12 @@ public class FunctionalUtils {
         return a -> supplier.get();
     }
 
-    public static <T> T propagateException(SupplierEx<T> supplier) {
-        try {
-            return supplier.get();
-        } catch (Exception e) {
-            throw CommonUtils.propagate(e);
-        }
+    @SuppressWarnings("unchecked")
+    public static <T> Supplier<T> lazy(Supplier<T> supplier) {
+        final Ref<T> res = new Ref(THBNL);
+        return () -> (T) (res.get() == THBNL ? res.setAndReturn(supplier.get()).get() : res.get());
     }
 
-    public static <T> Supplier<T> supplierEx(SupplierEx<T> supplier) {
-        return () -> {
-            try {
-                return supplier.get();
-            } catch (Exception e) {
-                throw CommonUtils.propagate(e);
-            }
-        };
-    }
 
-    public static <T> Runnable runEx(RunnableEx runnable) {
-        return () -> {
-            try {
-                runnable.run();
-            } catch (Exception e) {
-                throw CommonUtils.propagate(e);
-            }
-        };
-    }
-
-    public static void propagate(RunnableEx runnable) {
-        try {
-            runnable.run();
-        } catch (Exception e) {
-            throw CommonUtils.propagate(e);
-        }
-    }
-
-    //TODO BiFunction
-
-    public static <P, R> Function<P, R> exFun(FunctionEx<P, R> functionEx) {
-        return p -> {
-            try {
-                return functionEx.apply(p);
-            } catch (Exception e) {
-                throw CommonUtils.propagate(e);
-            }
-        };
-    }
 
 }
