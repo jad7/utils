@@ -52,7 +52,7 @@
     </dependencies>
 
     <properties>
-        <spring.version>4.3.25.RELEASE</spring.version>
+        <spring.version>5.3.18</spring.version>
         <commons.collections.version>4.4</commons.collections.version>
         <joda-time.version>2.10.5</joda-time.version>
     </properties>
